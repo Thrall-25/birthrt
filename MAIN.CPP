@@ -673,6 +673,18 @@ void MenuLoop()
 	======================================================================== */
 void GameMain(void)
 {
+#ifdef _WINDOWS
+	// Initialize InstallPath with the executable's directory
+	if (GetModuleFileName(NULL, InstallPath, sizeof(InstallPath)))
+	{
+		char* p = strrchr(InstallPath, '\\');
+		if (p)
+		{
+			p[1] = 0; // Keep the trailing backslash
+		}
+	}
+#endif
+
 	LONG i;
 	// Initialize Memory Manager, check for less than full needed memory
 	const LONG MemAvailable = InitMemManag(4098L, 3072L, 14000, FALSE);
