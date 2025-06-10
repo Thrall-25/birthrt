@@ -20,8 +20,6 @@ X   machine_post_frame    -does postframe things, such as updating the screen
    ------------------------------------------------------------------------ */
 #include <stdio.h>
 #include <stdlib.h>
-#include <dos.h>
-#include <conio.h>
 #include <Windows.h>
 #include "../RESOURCE.H"
 #include "../SYSTEM.H"

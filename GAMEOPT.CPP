@@ -534,7 +534,16 @@ void ReadOptionSettings(void)
 	{
 		for (SHORT i=0; i < MAX_SITES; i++)
 			sitecount[i] = 0;
-			
+
+		// Default fHighRes to TRUE when gameopt.dat is first created
+		fHighRes = TRUE;
+		// newAutoRes is already defaulted to FALSE via its static initialization.
+		// screen_mode will use its static default (iGDI or 0) or what OptionDefaults might set if called prior.
+		// For ensuring high-res, explicitly setting fHighRes is most direct.
+		// OptionDefaults() also sets screen_mode = iGDI, which generally implies high-res.
+		// We also ensure newAutoRes is false, which it is by static initialization.
+		newAutoRes = FALSE; // Explicitly ensure default for clarity, though already static default
+
 		UpdateOptionSettings();
 		WriteOptionSettings();
 		return;
@@ -547,6 +556,13 @@ void ReadOptionSettings(void)
 		remove(OPTIONSAVEFILE);
 		for (SHORT i=0; i < MAX_SITES; i++)
 			sitecount[i] = 0;
+
+		// Default fHighRes to TRUE when gameopt.dat is first created due to version mismatch
+		fHighRes = TRUE;
+		// newAutoRes is already defaulted to FALSE via its static initialization.
+		// screen_mode will use its static default (iGDI or 0).
+		// We also ensure newAutoRes is false, which it is by static initialization.
+		newAutoRes = FALSE; // Explicitly ensure default for clarity, though already static default
 			
 		UpdateOptionSettings();
 		WriteOptionSettings();

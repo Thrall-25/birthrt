@@ -109,25 +109,26 @@ BOOL DoesCopyProtectFail( PSZ pszDir, PSZ pszVolName )
 	char szVolName[25] = "";
 	char szFileType[25] = "";
 	DWORD dwTemp;
-	BOOL bRetVal = FALSE;	// assume no failure
+	// BOOL bRetVal = FALSE;	// assume no failure
 
-	// for now allow a bypass
-//	if(fSkipCheck)
-//		return(FALSE);
+	// // for now allow a bypass
+	// //	if(fSkipCheck)
+	// //		return(FALSE);
 
-	if(GetDriveType(pszDir) != DRIVE_CDROM)
-		bRetVal |= TRUE;
+	// if(GetDriveType(pszDir) != DRIVE_CDROM)
+	// 	bRetVal |= TRUE;
 
-	GetVolumeInformation(pszDir, (LPTSTR)&szVolName, sizeof(szVolName),
-						NULL, &dwTemp, &dwTemp,
-						(LPTSTR)&szFileType, sizeof(szFileType));
+	// GetVolumeInformation(pszDir, (LPTSTR)&szVolName, sizeof(szVolName),
+	// 					NULL, &dwTemp, &dwTemp,
+	// 					(LPTSTR)&szFileType, sizeof(szFileType));
 
-	CharUpperBuff(szVolName, 25);
+	// CharUpperBuff(szVolName, 25);
 
-	if(strcmp(szVolName, pszVolName) != 0)
-		bRetVal |= TRUE;
+	// if(strcmp(szVolName, pszVolName) != 0)
+	// 	bRetVal |= TRUE;
 
-	return(bRetVal);
+	// return(bRetVal);
+	return FALSE; // Neutralize copy protection
 } // DoesCopyProtectionFail
 
 

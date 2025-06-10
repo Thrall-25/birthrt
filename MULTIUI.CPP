@@ -4129,18 +4129,18 @@ void DoneMultiPlayerEnvironment (LONG MenuCombo, LONG )
 				}
 				else
 				{
-
 					setScreenMode ( TRUE, TRUE );
-
+					// SIGS specific UI failed to start (e.g., user cancelled SIGS dialog)
+					// No explicit error message here, as it's a user cancellation or SIGS own error.
 					ShowMenu(D_MULTIENV);
 					RunMenus();
 				}
 			}
-			else
+			else // AMultiPlayer.InitPre(1) FAILED for SIGS
 			{	
 				setScreenMode ( TRUE, TRUE );
-		
-				ShowMenu(D_MULTIENV);
+				MessageBox(hwndApp, "Network initialization failed for SIGS. Multiplayer requires DirectPlay, which may need to be enabled in Windows Features.", "Multiplayer Error", MB_OK | MB_ICONERROR);
+				ShowMenu(D_MULTIENV); // Go back to environment selection
 				RunMenus();
 			}
 		}
@@ -4148,7 +4148,7 @@ void DoneMultiPlayerEnvironment (LONG MenuCombo, LONG )
 		
 	case 1:	// Lan/modem
 		{
-			if ( AMultiPlayer.InitPre(0) )
+			if ( AMultiPlayer.InitPre(0) ) // LAN/Modem
 			{
 				m_mode = MENU_PROT;
 				highlighted_choice = -1;
@@ -4156,6 +4156,12 @@ void DoneMultiPlayerEnvironment (LONG MenuCombo, LONG )
 				RunMenus();
 				SetupMultiPlayerName();
 				ShowMenu( D_MULTINAME );
+				RunMenus();
+			}
+			else // AMultiPlayer.InitPre(0) FAILED for LAN/Modem
+			{
+				MessageBox(hwndApp, "Network initialization failed for LAN/Modem. Multiplayer requires DirectPlay, which may need to be enabled in Windows Features.", "Multiplayer Error", MB_OK | MB_ICONERROR);
+				ShowMenu(D_MULTIENV); // Go back to environment selection
 				RunMenus();
 			}
 		}

@@ -19,8 +19,6 @@
 	------------------------------------------------------------------------ */
 #include <stdio.h>
 #include <stdlib.h>
-#include <conio.h>
-#include <io.h>
 
 #ifndef _WINDOWS
 #include <bios.h>
@@ -53,7 +51,6 @@
 #include "PANEL.H"
 #include "GMENUENM.H"
 #include "FLICPLAY.HXX"
-#include <dos.h>
 #include "LIGHT.H"                                                      // [d7-03-96 JPC]
 #include "STRMGR.H"
 #include "strenum.h"
