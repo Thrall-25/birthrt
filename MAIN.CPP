@@ -1698,6 +1698,15 @@ purpose  if the music is done, start a frame counter to wait a while before star
 ===============================================================================*/
 void CheckTheCDMusic(void)
 {
+	// If CDDrive is not configured or CD device is not open, do nothing.
+	// wCDDeviceID should be extern from MCIUTIL.H or similar.
+	// CDDrive is global in this file.
+	extern UINT wCDDeviceID; // Ensure wCDDeviceID is known (should be in a header)
+	if (CDDrive[0] == '\0' || wCDDeviceID == 0)
+	{
+		return;
+	}
+
 	static LONG StartTime = 0;
 	static SHORT delayTicks;
 

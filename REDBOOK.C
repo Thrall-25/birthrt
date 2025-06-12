@@ -144,7 +144,9 @@ void PrintRedError (void)
 int InitRedBook(void)
 {
 #ifdef _WINDOWS
-		if(mci_OpenCD() )
+		// mci_OpenCD now returns MCI_NOERROR (0) on success, and non-zero on error.
+		// It also ensures wCDDeviceID is 0 if CDDrive is not set or open fails.
+		if(mci_OpenCD() == MCI_NOERROR)
 			fCDAvailible = TRUE;
 		else
 			fCDAvailible = FALSE;

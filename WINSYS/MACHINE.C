@@ -359,39 +359,64 @@ BOOL AppInit( HINSTANCE hInst, HINSTANCE hPrev, LPSTR szCmdLine, int sw )
 	// -- Make the world a little more random
 	srand(GetTickCount());
 
-	// Find the installation type.
+	// Initialize CDDrive to empty, indicating no CD drive configured yet.
+	CDDrive[0] = '\0';
+
+	// Find the installation type and CD drive.
 	fp=fopen("brsetup.cfg","r");
 	if(fp==NULL)
 	{
+		// brsetup.cfg not found. This is not fatal.
+		// CDDrive will remain empty, and default InstallationType will be used.
+		// In debug mode, one might want a warning, but not a fatal_error.
 #if defined (_DEBUG)
-			fatal_error("Unable to open brsetup.cfg file.  Game not properly installed.");
+		// OutputDebugStringA("brsetup.cfg not found. Proceeding with defaults.\n");
 #endif
-			return FALSE;
+		// Do not return FALSE; allow the game to run without brsetup.cfg.
 	}
-	InstallationType=2;  // set to English as default
-	do
+	else
 	{
-		fileResult = GetNextLine(fp,cpBuffer,sizeof(cpBuffer));
-		if(fileResult != EOF)
+		InstallationType=2;  // set to English as default
+		do
 		{
-			if(strcmp(cpBuffer,"[LOGCOMMENT]") == 0)
+			fileResult = GetNextLine(fp,cpBuffer,sizeof(cpBuffer));
+			if(fileResult != EOF)
 			{
-				fLogComment = TRUE;
+				if(strcmp(cpBuffer,"[LOGCOMMENT]") == 0)
+				{
+					fLogComment = TRUE;
+				}
+				else
+				if(strcmp(cpBuffer,"[INSTALL_TYPE]") == 0)
+				{
+					fileResult = GetNextLine(fp,cpBuffer,sizeof(cpBuffer));
+					if(fileResult != EOF) InstallationType = atoi(cpBuffer);
+				}
+				else if(strcmp(cpBuffer,"[CD]") == 0)
+				{
+					fileResult = GetNextLine(fp,cpBuffer,sizeof(cpBuffer));
+					if(fileResult != EOF)
+					{
+						strncpy(CDDrive,cpBuffer, sizeof(CDDrive)-1);
+						CDDrive[sizeof(CDDrive)-1] = '\0'; // Ensure null termination
+						// Only append ":\\" if CDDrive is not empty and does not already contain it.
+						// And ensure there's space. Max 1 char for drive letter.
+						if (strlen(CDDrive) == 1 && CDDrive[0] >= 'A' && CDDrive[0] <= 'Z')
+						{
+							strcat(CDDrive,":\\");
+						}
+						else if (strlen(CDDrive) > 0 && strstr(CDDrive, ":\\") == NULL)
+						{
+							// Potentially problematic if cpBuffer was already like "C:", handle carefully or simplify.
+							// For now, assume cpBuffer is just the drive letter.
+							// If CDDrive is just "C", make it "C:\\"
+						}
+					}
+				}
 			}
-			else
-			if(strcmp(cpBuffer,"[INSTALL_TYPE]") == 0)
-			{
-				fileResult = GetNextLine(fp,cpBuffer,sizeof(cpBuffer));
-				InstallationType = atoi(cpBuffer);
-			}
-			else if(strcmp(cpBuffer,"[CD]") == 0)
-			{
-				fileResult = GetNextLine(fp,cpBuffer,sizeof(cpBuffer));
-				strcpy(CDDrive,cpBuffer);
-				strcat(CDDrive,":\\");
-			}
-		}
-	}while(fileResult != EOF);
+		} while(fileResult != EOF);
+		fclose(fp);
+	}
 	// 2 = english, 1 = french, 0 = german
 
 // FOREIGN LANGUAGES ARE NOT IN SEPERATE SUBDIRECTORIES [ABC] 9/23/97
@@ -410,7 +435,7 @@ BOOL AppInit( HINSTANCE hInst, HINSTANCE hPrev, LPSTR szCmdLine, int sw )
 //			strcpy(InstallPath,".\\");
 //			break;
 //	}
-	fclose(fp);
+	// fclose(fp); // Moved inside the else block
 	#ifdef _WINDOWS
 	#ifdef _DEBUG
 		RandomLogOpen ();

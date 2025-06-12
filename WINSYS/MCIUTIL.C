@@ -21,7 +21,7 @@ static	FARPROC fpOldAVIWndProc = NULL;
 static	HWND hwndApp = NULL;
 
 MCI_OPEN_PARMS mci_OpenParms;    //---- Open parameters for mci 
-UINT wCDDeviceID;
+UINT wCDDeviceID = 0; // Initialize to 0
 UINT wAVIDeviceId = 0;
 HWND        ghwndMovie;		/* window handle of the movie */
 BOOL fSkipCheck = FALSE;
@@ -407,6 +407,15 @@ DWORD mci_OpenCD(void)
 {
 	DWORD dwReturn = 0L;
 
+	// If CDDrive is not configured, do not attempt to open CD Audio.
+	// Assumes CDDrive is an extern char array. Add 'extern char CDDrive[];' if not in a header.
+	extern char CDDrive[];
+	if (CDDrive[0] == '\0')
+	{
+		wCDDeviceID = 0; // Ensure it's 0
+		return MCIERR_INVALID_DEVICE_NAME; // Or some other suitable error
+	}
+
     MCI_OPEN_PARMS mciOpenParms;
 
     // Open the CD audio device by specifying the device name.
@@ -415,17 +424,19 @@ DWORD mci_OpenCD(void)
 									MCI_OPEN_TYPE, (DWORD)(LPVOID) &mciOpenParms) )
     {
         // Failed to open device. Don't close it; just return error.
+        wCDDeviceID = 0; // Ensure it's 0 on failure
         return (dwReturn);
     }
 
     // The device opened successfully; get the device ID.
     wCDDeviceID = mciOpenParms.wDeviceID;
 
-	return (1L);
+	return (MCI_NOERROR); // Return 0 for success, consistent with MCI functions
 }
 
 DWORD mci_CloseCD(void)
 {
+	if (wCDDeviceID == 0) return MCIERR_DEVICE_NOT_OPEN;
 	return (mciSendCommand(wCDDeviceID, MCI_CLOSE, 0, (DWORD)NULL));
 }
 
@@ -440,12 +451,16 @@ DWORD mci_PlayCD(HWND hWndNotify, BYTE bTrack, BYTE bStartMin, BYTE bStartSec, B
     MCI_SET_PARMS mciSetParms;
     MCI_PLAY_PARMS mciPlayParms;
 
-	// GEH Not So. fails running from CD for now, so just exit
-	// return(FALSE);
+	// Assumes CDDrive is an extern char array. Add 'extern char CDDrive[];' if not in a header.
+	extern char CDDrive[];
+	if (wCDDeviceID == 0 || CDDrive[0] == '\0')
+	{
+		return MCIERR_DEVICE_NOT_OPEN;
+	}
 
 	// if in network play or sound effects are off, don't use redbook sounds
 	if(fSound == FALSE)
-		return(FALSE);
+		return(MCIERR_UNSUPPORTED_FUNCTION); // Or some other appropriate error/status
 
     // Set the time format to track/minute/second/frame (TMSF).
     mciSetParms.dwTimeFormat = MCI_FORMAT_TMSF;
@@ -488,6 +503,12 @@ DWORD mci_PlayCD(HWND hWndNotify, BYTE bTrack, BYTE bStartMin, BYTE bStartSec, B
 
 DWORD mci_StopCD ( void )
 {
+	// Assumes CDDrive is an extern char array. Add 'extern char CDDrive[];' if not in a header.
+	extern char CDDrive[];
+	if (wCDDeviceID == 0 || CDDrive[0] == '\0')
+	{
+		return MCIERR_DEVICE_NOT_OPEN;
+	}
 
    DWORD   dwResult;
 
@@ -504,6 +525,12 @@ DWORD mci_StopCD ( void )
 
 DWORD mci_CheckCDBusy ( void )
 {
+	// Assumes CDDrive is an extern char array. Add 'extern char CDDrive[];' if not in a header.
+	extern char CDDrive[];
+	if (wCDDeviceID == 0 || CDDrive[0] == '\0')
+	{
+		return FALSE; // Not busy, as it's not open or configured
+	}
 
    DWORD   dwResult;
    MCI_STATUS_PARMS	mciStatusParms;
@@ -515,11 +542,15 @@ DWORD mci_CheckCDBusy ( void )
                                MCI_STATUS_ITEM,
                                (DWORD)(LPVOID) &mciStatusParms );
 
+	if (dwResult != MCI_NOERROR) {
+		return FALSE; // Error occurred, assume not busy / not playing
+	}
 
-   // returns 1 if CD is busy
-   dwResult = (DWORD)(!(mciStatusParms.dwReturn & 0x00000001));
-   
-   return ( dwResult );
+   // returns TRUE if playing (mode is MCI_MODE_PLAY), FALSE otherwise
+   // Original logic: dwResult = (DWORD)(!(mciStatusParms.dwReturn & 0x00000001));
+   // This was inverted: 1 (busy/playing) -> FALSE, 0 (not busy) -> TRUE.
+   // Correct logic: return TRUE if mode is MCI_MODE_PLAY.
+   return (mciStatusParms.dwReturn == MCI_MODE_PLAY);
 
 
 }   //---- End of mci_CheckCDBusy()
