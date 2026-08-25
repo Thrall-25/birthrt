@@ -78,15 +78,18 @@ class InventoryApp(ctk.CTk):
                                               corner_radius=20)
         self.pay_dropdown.pack(side="right", padx=20, pady=15)
 
-        # Submit Button
-        self.submit_btn = ctk.CTkButton(self.user_frame, text="Salvează Tranzacția", font=ctk.CTkFont(size=16, weight="bold"),
-                                        fg_color=self.btn_yellow, text_color="black", hover_color=self.btn_yellow_h,
-                                        corner_radius=25, height=45, command=self.save_transaction)
-        self.submit_btn.pack(pady=30)
+        # Bind Enter key to save_transaction
+        self.bind('<Return>', self.save_transaction)
 
-        # Last sold item info label
-        self.last_sold_label = ctk.CTkLabel(self.user_frame, text="Nicio tranzacție recentă.", text_color="white", font=ctk.CTkFont(size=12, slant="italic"))
-        self.last_sold_label.pack(pady=5)
+        # Helper text for Enter key
+        help_label = ctk.CTkLabel(self.user_frame, text="*Apăsați Enter (Return) pentru a salva tranzacția*", text_color=self.btn_yellow, font=ctk.CTkFont(size=12, slant="italic"))
+        help_label.pack(pady=5)
+
+        # Transaction Log (replaces the single line label)
+        self.transaction_log = ctk.CTkTextbox(self.user_frame, width=400, height=150, corner_radius=15, fg_color=self.panel_blue, text_color="white")
+        self.transaction_log.pack(pady=10)
+        self.transaction_log.insert("end", "Jurnal Tranzacții:\n")
+        self.transaction_log.configure(state="disabled")
 
         # Inconspicuous Admin Button
         self.admin_btn = ctk.CTkButton(self.user_frame, text="Acces Administrator", font=ctk.CTkFont(size=10),
@@ -137,15 +140,15 @@ class InventoryApp(ctk.CTk):
         if password == self.admin_password:
             self.show_admin_interface()
         elif password is not None:
-            self.last_sold_label.configure(text="Eroare: Parolă incorectă!", text_color=self.btn_red)
+            self.update_log("Eroare: Parolă incorectă!")
 
-    def save_transaction(self):
+    def save_transaction(self, event=None):
         item = self.item_var.get()
         qty = self.qty_var.get()
         pay = self.pay_var.get()
 
         if not qty.isdigit() or int(qty) <= 0:
-            self.last_sold_label.configure(text="Eroare: Cantitate invalidă!", text_color=self.btn_red)
+            self.update_log("Eroare: Cantitate invalidă!")
             return
 
         transaction = {
@@ -169,8 +172,14 @@ class InventoryApp(ctk.CTk):
         with open(self.data_file, 'w', encoding='utf-8') as f:
             json.dump(transactions, f, ensure_ascii=False, indent=4)
 
-        self.last_sold_label.configure(text=f"Ultima vânzare: {qty} x {item} ({pay})", text_color=self.btn_yellow)
+        self.update_log(f"Vânzare salvată: {qty} x {item} ({pay})")
         self.qty_var.set("1") # Reset quantity
+
+    def update_log(self, message):
+        self.transaction_log.configure(state="normal")
+        self.transaction_log.insert("end", message + "\n")
+        self.transaction_log.see("end")
+        self.transaction_log.configure(state="disabled")
 
     def load_admin_data(self):
         self.data_view.delete("1.0", "end")
